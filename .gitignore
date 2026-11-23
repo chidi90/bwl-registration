@@ -1,0 +1,15 @@
+# Dependency folders (recreated via npm install)
+node_modules/
+
+# Environment files containing secrets
+.env
+.env.*
+!.env.example
+
+# Production build outputs
+dist/
+build/
+
+# Windows and macOS system clutter
+Thumbs.db
+.DS_Store
