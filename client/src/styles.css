@@ -1,0 +1,421 @@
+/* Blue and white design tokens for the entire application */
+:root {
+  --blue-deep: #0b3975;
+  --blue-bright: #1d6fe8;
+  --blue-soft: #60a5fa;
+  --blue-pale: #e6f0ff;
+  --white: #ffffff;
+  --text-dark: #0f172a;
+  --text-muted: #475569;
+  --error-red: #dc2626;
+  --error-bg: #fef2f2;
+  --border-subtle: rgba(15, 23, 42, 0.16);
+}
+
+/* Predictable box sizing across all elements */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Soft blue gradient background and dark readable base typography */
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--text-dark);
+  background: linear-gradient(155deg, #f4f8ff 0%, #dceaff 52%, #c7dfff 100%);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Fixed, non-interactive layer holding the 3 static blurred blue circles */
+.bg-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Shared shape and heavy blur for all background circles (no animation for smooth mobile scroll) */
+.bg-circle {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+}
+
+/* Top-left large bright blue circle */
+.bg-circle-1 {
+  width: 340px;
+  height: 340px;
+  top: -90px;
+  left: -80px;
+  background: rgba(29, 111, 232, 0.42);
+}
+
+/* Middle-right medium deep blue circle */
+.bg-circle-2 {
+  width: 280px;
+  height: 280px;
+  top: 38%;
+  right: -90px;
+  background: rgba(11, 57, 117, 0.34);
+}
+
+/* Bottom-left extra-large soft sky blue circle */
+.bg-circle-3 {
+  width: 380px;
+  height: 380px;
+  bottom: -110px;
+  left: 8%;
+  background: rgba(96, 165, 250, 0.48);
+}
+
+/* Main page wrapper sitting above the background circles */
+.page-shell {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 20px 14px 36px;
+}
+
+/* Frosted glass card style */
+.glass {
+  background: rgba(255, 255, 255, 0.76);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 20px;
+  box-shadow: 0 14px 36px rgba(11, 57, 117, 0.12);
+}
+
+/* Fallback for older browsers that do not support backdrop-filter blur */
+@supports not (backdrop-filter: blur(1px)) {
+  .glass {
+    background: rgba(255, 255, 255, 0.95);
+  }
+}
+
+/* Header block */
+.site-header {
+  text-align: center;
+  margin-bottom: 16px;
+  padding: 18px 16px;
+}
+
+.church-name {
+  margin: 0 0 4px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--blue-bright);
+}
+
+.page-title {
+  margin: 0 0 8px;
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: var(--blue-deep);
+  line-height: 1.25;
+}
+
+.theme-line {
+  margin: 0;
+  font-size: 0.95rem;
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+/* Meeting flier container directly under the header */
+.flier-box {
+  margin-bottom: 18px;
+  padding: 14px;
+  text-align: center;
+}
+
+.flier-placeholder {
+  border: 2px dashed rgba(29, 111, 232, 0.35);
+  border-radius: 14px;
+  padding: 28px 16px;
+  color: var(--blue-deep);
+  font-weight: 600;
+  font-size: 0.95rem;
+  background: rgba(230, 240, 255, 0.45);
+}
+
+.flier-image {
+  display: block;
+  width: 100%;
+  max-height: 360px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+/* Main registration form card */
+.form-card {
+  padding: 20px 16px;
+}
+
+.form-note {
+  margin: 0 0 18px;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.required-star {
+  color: var(--error-red);
+  font-weight: 700;
+  margin-left: 3px;
+}
+
+/* Top validation summary banner */
+.error-summary {
+  background: var(--error-bg);
+  border: 1px solid var(--error-red);
+  color: var(--error-red);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 18px;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+/* Organized form sections (Personal, Contact, Church) */
+.form-section {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(11, 57, 117, 0.12);
+}
+
+.form-section:last-of-type {
+  border-bottom: none;
+  margin-bottom: 12px;
+  padding-bottom: 0;
+}
+
+.section-heading {
+  margin: 0 0 14px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--blue-deep);
+}
+
+/* Single-column mobile-first layout for fields */
+.field-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.field-full {
+  grid-column: 1 / -1;
+}
+
+/* Individual form field wrapper */
+.form-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.field-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--text-dark);
+}
+
+/* Tap-friendly inputs (44px min height, 16px font prevents iPhone auto-zoom) */
+.text-input,
+.select-input,
+.textarea-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  font-size: 16px;
+  font-family: inherit;
+  color: var(--text-dark);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1.5px solid var(--border-subtle);
+  border-radius: 10px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.textarea-input {
+  min-height: 88px;
+  resize: vertical;
+}
+
+.text-input:focus,
+.select-input:focus,
+.textarea-input:focus {
+  outline: none;
+  border-color: var(--blue-bright);
+  box-shadow: 0 0 0 3px rgba(29, 111, 232, 0.22);
+}
+
+/* Red border highlight when a field has an error */
+.input-error {
+  border-color: var(--error-red);
+  background: var(--error-bg);
+}
+
+/* Field-level error text */
+.field-error {
+  margin: 5px 0 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--error-red);
+}
+
+/* Radio button group layout */
+.radio-fieldset {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.radio-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.radio-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.88);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.radio-pill input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--blue-bright);
+  margin: 0;
+}
+
+.radio-pill:has(input:focus-visible) {
+  outline: 3px solid rgba(29, 111, 232, 0.3);
+  border-color: var(--blue-bright);
+}
+
+/* Indented sub-panel for conditional Yes questions */
+.conditional-group {
+  margin-top: 12px;
+  padding: 14px;
+  border-left: 3px solid var(--blue-bright);
+  background: rgba(230, 240, 255, 0.55);
+  border-radius: 0 12px 12px 0;
+}
+
+/* Primary and secondary buttons */
+.btn-primary {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 8px;
+  padding: 12px 20px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--white);
+  background: linear-gradient(135deg, var(--blue-bright), var(--blue-deep));
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(11, 57, 117, 0.25);
+}
+
+.btn-primary:hover {
+  filter: brightness(1.06);
+}
+
+.btn-primary:focus-visible {
+  outline: 3px solid rgba(29, 111, 232, 0.45);
+  outline-offset: 2px;
+}
+
+/* Success card after submission */
+.success-card {
+  text-align: center;
+  padding: 28px 18px;
+}
+
+.success-title {
+  margin: 0 0 12px;
+  font-size: 1.45rem;
+  color: var(--blue-deep);
+}
+
+.code-badge {
+  display: inline-block;
+  margin: 8px 0 14px;
+  padding: 14px 26px;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--blue-deep);
+  background: var(--blue-pale);
+  border: 2px solid var(--blue-bright);
+  border-radius: 14px;
+}
+
+.success-note {
+  margin: 0 0 22px;
+  font-size: 1rem;
+  color: var(--text-dark);
+}
+
+/* Quiet footer with hidden-style Registrar Access link */
+.site-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 8px 6px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.registrar-link {
+  color: var(--text-muted);
+  text-decoration: none;
+  opacity: 0.72;
+}
+
+.registrar-link:hover,
+.registrar-link:focus-visible {
+  opacity: 1;
+  text-decoration: underline;
+  color: var(--blue-deep);
+}
+
+/* Tablet and desktop layout enhancements */
+@media (min-width: 640px) {
+  .page-shell {
+    padding: 32px 24px 48px;
+  }
+
+  .page-title {
+    font-size: 1.9rem;
+  }
+
+  .form-card {
+    padding: 28px 28px;
+  }
+
+  .field-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+}
