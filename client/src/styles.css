@@ -419,3 +419,23 @@ body {
     gap: 16px;
   }
 }
+
+/* Disabled button state while waiting for the server */
+.btn-primary:disabled {
+  opacity: 0.68;
+  cursor: not-allowed;
+  filter: none;
+}
+
+/* Server or network error message box placed right above the submit button */
+.server-error-box {
+  background: var(--error-bg);
+  border: 1.5px solid var(--error-red);
+  color: var(--error-red);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-top: 12px;
+  margin-bottom: 6px;
+  font-weight: 600;
+  font-size: 0.95rem;
+}

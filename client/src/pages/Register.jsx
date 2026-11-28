@@ -1,4 +1,4 @@
-// Public BWL 2027 registration form page
+// Public BWL 2027 registration form connected to the Express backend API
 import { useState, useRef } from "react";
 import {
   titles,
@@ -10,6 +10,7 @@ import {
   trulatSets
 } from "../lib/options.js";
 import { validateForm } from "../lib/validate.js";
+import { registerPerson } from "../lib/api.js";
 import { FormField } from "../components/FormField.jsx";
 import { RadioGroup } from "../components/RadioGroup.jsx";
 import { SuccessCard } from "../components/SuccessCard.jsx";
@@ -56,11 +57,32 @@ const BOOLEAN_FIELDS = [
   "is_trulat_student"
 ];
 
+// Prepare clean payload: trim text, convert blank optional strings to null, keep booleans
+function buildCleanPayload(rawFormData) {
+  const payload = {};
+
+  for (const key of Object.keys(rawFormData)) {
+    const value = rawFormData[key];
+
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      payload[key] = trimmed.length > 0 ? trimmed : null;
+    } else {
+      payload[key] = value;
+    }
+  }
+
+  return payload;
+}
+
 export function Register() {
   const [formData, setFormData] = useState(INITIAL_FORM_DATA);
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [serverError, setServerError] = useState(null);
   const [submittedCode, setSubmittedCode] = useState("");
   const formRef = useRef(null);
+  const serverErrorRef = useRef(null);
 
   // Single change handler for every text box, dropdown, textarea, and radio button
   function handleChange(event) {
@@ -92,7 +114,7 @@ export function Register() {
       return updated;
     });
 
-    // Clear that field's error message as soon as the user edits it
+    // Clear that field's inline error as soon as the user edits it
     if (errors[name]) {
       setErrors(function clearFieldError(prevErrors) {
         const nextErrors = { ...prevErrors };
@@ -100,17 +122,29 @@ export function Register() {
         return nextErrors;
       });
     }
+
+    // Clear any banner error from a previous server attempt when the user edits
+    if (serverError) {
+      setServerError(null);
+    }
   }
 
-  // Validate inputs, scroll to the first error if invalid, or show placeholder success
-  function handleSubmit(event) {
+  // Validate locally, send clean data to the backend, and handle success or friendly errors
+  async function handleSubmit(event) {
     event.preventDefault();
 
+    // Prevent duplicate submissions if already waiting on the server
+    if (isSubmitting) {
+      return;
+    }
+
+    setServerError(null);
+
+    // Step 1: Run fast client-side validation first
     const validationErrors = validateForm(formData);
     setErrors(validationErrors);
 
     if (Object.keys(validationErrors).length > 0) {
-      // Scroll smoothly to the first invalid field or summary banner
       if (formRef.current) {
         const firstErrorEl = formRef.current.querySelector(".input-error, .error-summary");
         if (firstErrorEl) {
@@ -120,16 +154,50 @@ export function Register() {
       return;
     }
 
-    // TODO Unit 7: replace with real server call
-    console.log("Valid registration payload ready for Unit 7:", formData);
-    setSubmittedCode("BWL-0001");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    // Step 2: Lock the submit button and send clean payload to the server
+    setIsSubmitting(true);
+    const cleanPayload = buildCleanPayload(formData);
+    const result = await registerPerson(cleanPayload);
+    setIsSubmitting(false);
+
+    // Step 3: On success, reset the form and display the real generated BWL code
+    if (result.ok) {
+      setFormData(INITIAL_FORM_DATA);
+      setErrors({});
+      setServerError(null);
+      setSubmittedCode(result.meeting_code);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    // Step 4: On failure, keep all typed inputs, show server error, and highlight field if given
+    setServerError({
+      message: result.message,
+      field: result.field || null
+    });
+
+    if (result.field) {
+      setErrors({ [result.field]: result.message });
+
+      // Wait one paint frame so the highlighted field renders, then scroll to it
+      setTimeout(function scrollToServerField() {
+        if (formRef.current) {
+          const targetEl = formRef.current.querySelector(`[name="${result.field}"]`);
+          if (targetEl) {
+            targetEl.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+        }
+      }, 0);
+    } else if (serverErrorRef.current) {
+      serverErrorRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
   }
 
   // Reset everything to a fresh blank form for the next registrant
   function handleReset() {
     setFormData(INITIAL_FORM_DATA);
     setErrors({});
+    setServerError(null);
     setSubmittedCode("");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -169,7 +237,7 @@ export function Register() {
             <select
               id="title"
               name="title"
-              className="select-input"
+              className={errors.title ? "select-input input-error" : "select-input"}
               value={formData.title}
               onChange={handleChange}
             >
@@ -226,7 +294,7 @@ export function Register() {
               name="other_names"
               type="text"
               maxLength={60}
-              className="text-input"
+              className={errors.other_names ? "text-input input-error" : "text-input"}
               value={formData.other_names}
               onChange={handleChange}
             />
@@ -249,7 +317,9 @@ export function Register() {
             <select
               id="marital_status"
               name="marital_status"
-              className="select-input"
+              className={
+                errors.marital_status ? "select-input input-error" : "select-input"
+              }
               value={formData.marital_status}
               onChange={handleChange}
             >
@@ -284,7 +354,7 @@ export function Register() {
               name="occupation"
               type="text"
               maxLength={100}
-              className="text-input"
+              className={errors.occupation ? "text-input input-error" : "text-input"}
               value={formData.occupation}
               onChange={handleChange}
             />
@@ -309,43 +379,43 @@ export function Register() {
               id="address"
               name="address"
               maxLength={300}
-              className="textarea-input"
+              className={errors.address ? "textarea-input input-error" : "textarea-input"}
               value={formData.address}
               onChange={handleChange}
             />
           </FormField>
 
-          <FormField label="City / Town Of Residence" htmlFor="city_town" error={errors.city_town}>
+          <FormField label="City / Town" htmlFor="city_town" error={errors.city_town}>
             <input
               id="city_town"
               name="city_town"
               type="text"
               maxLength={100}
-              className="text-input"
+              className={errors.city_town ? "text-input input-error" : "text-input"}
               value={formData.city_town}
               onChange={handleChange}
             />
           </FormField>
 
-          <FormField label="LGA Of Residence" htmlFor="lga" error={errors.lga}>
+          <FormField label="LGA" htmlFor="lga" error={errors.lga}>
             <input
               id="lga"
               name="lga"
               type="text"
               maxLength={100}
-              className="text-input"
+              className={errors.lga ? "text-input input-error" : "text-input"}
               value={formData.lga}
               onChange={handleChange}
             />
           </FormField>
 
-          <FormField label="State Of Residence" htmlFor="state" error={errors.state}>
+          <FormField label="State" htmlFor="state" error={errors.state}>
             <input
               id="state"
               name="state"
               type="text"
               maxLength={100}
-              className="text-input"
+              className={errors.state ? "text-input input-error" : "text-input"}
               value={formData.state}
               onChange={handleChange}
             />
@@ -357,7 +427,7 @@ export function Register() {
               name="country"
               type="text"
               maxLength={100}
-              className="text-input"
+              className={errors.country ? "text-input input-error" : "text-input"}
               value={formData.country}
               onChange={handleChange}
             />
@@ -433,7 +503,9 @@ export function Register() {
             <select
               id="church_ministry"
               name="church_ministry"
-              className="select-input"
+              className={
+                errors.church_ministry ? "select-input input-error" : "select-input"
+              }
               value={formData.church_ministry}
               onChange={handleChange}
             >
@@ -454,7 +526,9 @@ export function Register() {
             <select
               id="ministerial_call"
               name="ministerial_call"
-              className="select-input"
+              className={
+                errors.ministerial_call ? "select-input input-error" : "select-input"
+              }
               value={formData.ministerial_call}
               onChange={handleChange}
             >
@@ -474,6 +548,7 @@ export function Register() {
             value={formData.in_discipleship}
             onChange={handleChange}
             fullWidth
+            error={errors.in_discipleship}
           />
 
           {formData.in_discipleship === true && (
@@ -482,13 +557,18 @@ export function Register() {
                 <FormField
                   label="If yes, under whose hand?"
                   htmlFor="discipleship_under"
+                  error={errors.discipleship_under}
                 >
                   <input
                     id="discipleship_under"
                     name="discipleship_under"
                     type="text"
                     maxLength={100}
-                    className="text-input"
+                    className={
+                      errors.discipleship_under
+                        ? "text-input input-error"
+                        : "text-input"
+                    }
                     value={formData.discipleship_under}
                     onChange={handleChange}
                   />
@@ -497,13 +577,16 @@ export function Register() {
                 <FormField
                   label="Discipleship Study Centre"
                   htmlFor="study_centre"
+                  error={errors.study_centre}
                 >
                   <input
                     id="study_centre"
                     name="study_centre"
                     type="text"
                     maxLength={100}
-                    className="text-input"
+                    className={
+                      errors.study_centre ? "text-input input-error" : "text-input"
+                    }
                     value={formData.study_centre}
                     onChange={handleChange}
                   />
@@ -519,6 +602,7 @@ export function Register() {
             value={formData.attended_last_year}
             onChange={handleChange}
             fullWidth
+            error={errors.attended_last_year}
           />
 
           <RadioGroup
@@ -528,6 +612,7 @@ export function Register() {
             value={formData.is_trulat_student}
             onChange={handleChange}
             fullWidth
+            error={errors.is_trulat_student}
           />
 
           {formData.is_trulat_student === true && (
@@ -538,6 +623,7 @@ export function Register() {
                 options={trulatSets}
                 value={formData.trulat_set}
                 onChange={handleChange}
+                error={errors.trulat_set}
               />
             </div>
           )}
@@ -546,12 +632,15 @@ export function Register() {
             label="Any other information you may want us to have?"
             htmlFor="other_info"
             fullWidth
+            error={errors.other_info}
           >
             <textarea
               id="other_info"
               name="other_info"
               maxLength={500}
-              className="textarea-input"
+              className={
+                errors.other_info ? "textarea-input input-error" : "textarea-input"
+              }
               value={formData.other_info}
               onChange={handleChange}
             />
@@ -559,8 +648,14 @@ export function Register() {
         </div>
       </section>
 
-      <button type="submit" className="btn-primary">
-        Register
+      {serverError && (
+        <div ref={serverErrorRef} className="server-error-box" role="alert">
+          {serverError.message}
+        </div>
+      )}
+
+      <button type="submit" className="btn-primary" disabled={isSubmitting}>
+        {isSubmitting ? "Registering..." : "Register"}
       </button>
     </form>
   );
